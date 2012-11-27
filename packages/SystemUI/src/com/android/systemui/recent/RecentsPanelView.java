@@ -73,7 +73,7 @@ import android.text.format.Formatter;
 import java.util.ArrayList;
 
 public class RecentsPanelView extends FrameLayout implements OnItemClickListener, RecentsCallback,
-        StatusBarPanel, Animator.AnimatorListener {
+        StatusBarPanel, Animator.AnimatorListener, RunningState.OnRefreshUiListener {
     static final String TAG = "RecentsPanelView";
     static final boolean DEBUG = PhoneStatusBar.DEBUG || false;
     private PopupMenu mPopup;
@@ -401,10 +401,12 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     }
 
     public void dismiss() {
+        mState.pause();
         ((RecentsActivity) mContext).dismissAndGoHome();
     }
 
     public void dismissAndGoBack() {
+        mState.pause();
         ((RecentsActivity) mContext).dismissAndGoBack();
     }
 
@@ -462,6 +464,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     protected void onFinishInflate() {
         super.onFinishInflate();
 
+        mState = RunningState.getInstance(getContext());
         mRecentsContainer = (RecentsScrollView) findViewById(R.id.recents_container);
         mRecentsContainer.setOnScrollListener(new Runnable() {
             public void run() {
@@ -495,7 +498,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                     }
                 });
         }
-
+        mState.resume(this);
         UpdateRamBar();
     }
 
@@ -661,7 +664,6 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         if (((RecentsActivity) mContext).isActivityShowing()) {
             refreshViews();
         }
-        UpdateRamBar();
     }
 
     private void updateUiElements() {
@@ -682,7 +684,6 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                 R.plurals.status_bar_accessibility_recent_apps, numRecentApps, numRecentApps);
         }
         setContentDescription(recentAppsAccessibilityDescription);
-        UpdateRamBar();
     }
 
     public boolean simulateClick(int persistentTaskId) {
@@ -742,7 +743,6 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         if (usingDrawingCache) {
             holder.thumbnailViewImage.setDrawingCacheEnabled(false);
         }
-        UpdateRamBar();
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -780,7 +780,6 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED);
             setContentDescription(null);
         }
-        UpdateRamBar();
     }
 
     private void startApplicationDetailsActivity(String packageName) {
@@ -873,9 +872,24 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         dismissAndGoBack();
     }
 
+    @Override
+    public void onRefreshUi(int what) {
+        switch (what) {
+            case REFRESH_TIME:
+                UpdateRamBar();
+                break;
+            case REFRESH_DATA:
+                UpdateRamBar();
+                break;
+            case REFRESH_STRUCTURE:
+                UpdateRamBar();
+                break;
+        }
+    }
+
     private void UpdateRamBar(){
         mAm = (ActivityManager)getContext().getSystemService(Context.ACTIVITY_SERVICE);
-        mState = RunningState.getInstance(getContext());
+        //mState = RunningState.getInstance(getContext());
 
         boolean recent_kill_all_button = Settings.System.getBoolean(mContext.getContentResolver(),
                       Settings.System.RECENT_KILL_ALL_BUTTON, false);
