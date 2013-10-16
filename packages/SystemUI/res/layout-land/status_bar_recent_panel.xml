@@ -55,7 +55,6 @@
         </com.android.systemui.recent.RecentsHorizontalScrollView>
 
         <Button android:id="@+id/recents_kill_all_button"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_gravity="bottom|right"
             android:layout_marginTop="5dp"
             android:layout_marginRight="5dp"
